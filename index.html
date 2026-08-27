@@ -289,7 +289,7 @@
   <div class="modal">
     <button class="modal-close" data-close="info-modal">✕</button>
     <h2>📋 Spielregeln</h2>
-    <p style="margin-bottom:12px">Patrick muss verschiedene <strong>Standard-Challenges</strong> bestehen. Bei jeder Standard-Challenge können <strong>0–5 Punkte</strong> erreicht werden. <strong>Zusatz-Challenges</strong> können bis zu <strong>3 Punkte</strong> bringen und fliessen direkt in die Gesamtwertung ein – werden aber beim Teilen nicht mitgezählt.</p>
+    <p style="margin-bottom:12px">Patrick muss verschiedene <strong>Standard-Challenges</strong> bestehen. Bei jeder Standard-Challenge können <strong>0–5 Punkte</strong> erreicht werden. <strong>Zusatz-Challenges</strong> bringen beliebig viele Punkte und fliessen direkt in die Gesamtwertung ein – werden aber beim Teilen nicht mitgezählt.</p>
     <ul>
       <li>
         <span class="rule-chip chip-green">✅ Bestanden</span><br>
@@ -334,8 +334,8 @@
             <select id="ch-select"></select>
           </div>
           <div>
-            <label>Punkte (0–5)</label>
-            <input type="number" id="ch-score" min="0" max="5" placeholder="0–5" />
+            <label>Punkte (0–5, bei Zusatz unbegrenzt)</label>
+            <input type="number" id="ch-score" min="0" placeholder="Punkte" />
           </div>
           <button class="btn btn-outline" id="set-score-btn">Punkte speichern</button>
         </div>
@@ -437,8 +437,8 @@
     card.classList.add(chipClass);
     statusText.textContent = label;
     avgDisplay.textContent =
-      `Ø ${avg.toFixed(2)} Punkte (${scored.length}/${std.length} Standard` +
-      (zusatzSum > 0 ? `, +${zusatzSum} Zusatz` : '') + ')';
+      `Ø ${avg.toFixed(2)} Punkte (${std.length} Standard` +
+      (zusatzSum > 0 ? ` + ${zusatzSum} Zusatz` : '') + ')';
     sub.textContent = `Ø ${avg.toFixed(2)} / 5`;
   }
 
@@ -577,8 +577,7 @@
     const score = parseInt(document.getElementById('ch-score').value, 10);
     if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
     const ch = state.challenges[idx];
-    const maxScore = ch.type === 'zusatz' ? 3 : 5;
-    if (isNaN(score) || score < 0 || score > maxScore) { showAdminMsg(`Punkte müssen 0–${maxScore} sein`, true); return; }
+    if (isNaN(score) || score < 0 || (ch.type !== 'zusatz' && score > 5)) { showAdminMsg(ch.type === 'zusatz' ? 'Punkte müssen ≥ 0 sein' : 'Punkte müssen 0–5 sein', true); return; }
     ch.score = score;
     render();
     showAdminMsg('Punkte gespeichert ✓');
