@@ -327,23 +327,6 @@
 
     <div id="admin-content" style="display:none">
 
-      <div class="admin-form" id="add-form">
-        <div>
-          <label>Challenge Name</label>
-          <input type="text" id="ch-name" placeholder="z.B. Bierpong" />
-        </div>
-        <div>
-          <label>Typ</label>
-          <select id="ch-type">
-            <option value="standard">Standard</option>
-            <option value="zusatz">Zusatz</option>
-          </select>
-        </div>
-        <button class="btn btn-primary" id="add-ch-btn">+ Challenge hinzufügen</button>
-      </div>
-
-      <hr style="border-color:#333;margin:20px 0">
-
       <div id="score-form">
         <div class="admin-form">
           <div>
@@ -579,19 +562,6 @@
     if (e.key === 'Enter') document.getElementById('admin-login-btn').click();
   });
 
-  // ── Add challenge ─────────────────────────────────────────────────────────────
-  document.getElementById('add-ch-btn').addEventListener('click', () => {
-    const name = document.getElementById('ch-name').value.trim();
-    const type = document.getElementById('ch-type').value;
-    if (!name) { showAdminMsg('Bitte Name eingeben', true); return; }
-    state.challenges.push({ name, type, score: null });
-    saveState();
-    document.getElementById('ch-name').value = '';
-    refreshAdminSelect();
-    render();
-    showAdminMsg('Challenge hinzugefügt ✓');
-  });
-
   // ── Set score ─────────────────────────────────────────────────────────────────
   document.getElementById('set-score-btn').addEventListener('click', () => {
     const idx = parseInt(document.getElementById('ch-select').value, 10);
@@ -599,7 +569,6 @@
     if (isNaN(score) || score < 0 || score > 5) { showAdminMsg('Punkte müssen 0–5 sein', true); return; }
     if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
     state.challenges[idx].score = score;
-    saveState();
     render();
     showAdminMsg('Punkte gespeichert ✓');
   });
@@ -608,7 +577,6 @@
   document.getElementById('finish-btn').addEventListener('click', () => {
     if (!confirm('Challenges wirklich beenden?')) return;
     state.finished = true;
-    saveState();
     document.getElementById('admin-modal').classList.remove('open');
     showResult();
   });
@@ -629,23 +597,7 @@
     setTimeout(() => { el.textContent = ''; }, 3000);
   }
 
-  // ── Persist to localStorage (lightweight local storage) ─────────────────────
-  // NOTE: For multi-device sync the admin uses the GitHub Actions workflow.
-  // Local admin changes are stored in localStorage and also reflected in-memory.
-  // The GitHub Pages version always fetches scores.json from the repo on load.
-  function saveState() {
-    try { localStorage.setItem('jga-state', JSON.stringify(state)); } catch {}
-  }
-
-  function loadLocalState() {
-    try {
-      const s = localStorage.getItem('jga-state');
-      if (s) state = JSON.parse(s);
-    } catch {}
-  }
-
   // ── Boot ──────────────────────────────────────────────────────────────────────
-  loadLocalState();
   render();
   loadData(); // overwrite with server data
   setInterval(loadData, REFRESH_INTERVAL);
