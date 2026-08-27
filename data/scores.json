@@ -1,4 +1,10 @@
 {
   "finished": false,
-  "challenges": []
+  "challenges": [
+    {
+      "name": "Mount Everest",
+      "type": "standard",
+      "score": 4
+    }
+  ]
 }
