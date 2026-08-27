@@ -3,9 +3,6 @@ name: Update Scores
 on:
   workflow_dispatch:
     inputs:
-
-permissions:
-  contents: write
       action:
         description: 'Action: add_challenge | update_score | finish | reset'
         required: true
@@ -34,6 +31,9 @@ permissions:
         description: 'Challenge index (0-based) for update_score'
         required: false
         type: string
+
+permissions:
+  contents: write
 
 jobs:
   update:
