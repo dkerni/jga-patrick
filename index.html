@@ -148,19 +148,7 @@
       padding: 40px 0;
     }
 
-    /* ── Admin trigger (hidden) ── */
-    #admin-trigger {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 50px;
-      cursor: pointer;
-      background: transparent;
-      border: none;
-      z-index: 200;
-    }
-    /* tap 7× on hidden bottom strip to reveal admin panel */
-
-    /* ── Modal (info + admin) ── */
+    /* ── Modal (info) ── */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -203,35 +191,6 @@
     .chip-green  { background: var(--green);  color: #fff; }
     .chip-orange { background: var(--orange); color: #fff; }
     .chip-red    { background: var(--red);    color: #fff; }
-
-    /* ── Admin panel ── */
-    #admin-panel .admin-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
-    #admin-panel label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 3px; }
-    #admin-panel input, #admin-panel select {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #444;
-      background: #0f0f1a;
-      color: var(--text);
-      font-size: .95rem;
-    }
-    .btn {
-      padding: 12px;
-      border-radius: var(--radius);
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-    }
-    .btn-primary { background: var(--accent); color: #fff; }
-    .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
-    .btn-danger  { background: var(--red); color: #fff; }
-    .btn-warn    { background: var(--orange); color: #fff; margin-top: 20px; }
-    .btn:active  { opacity: .8; }
-
-    #admin-msg { font-size: .85rem; color: var(--green); text-align: center; min-height: 1.2em; margin-top: 4px; }
 
     /* ── Final result overlay ── */
     #result-overlay {
@@ -281,9 +240,6 @@
   <div id="zusatz-list"><p class="no-challenges">Keine Zusatz-Challenges eingetragen</p></div>
 </div>
 
-<!-- Hidden admin trigger: tap 7× on bottom strip -->
-<button id="admin-trigger" aria-hidden="true" tabindex="-1"></button>
-
 <!-- Info Modal -->
 <div class="modal-overlay" id="info-modal">
   <div class="modal">
@@ -308,46 +264,6 @@
   </div>
 </div>
 
-<!-- Admin Modal -->
-<div class="modal-overlay" id="admin-modal">
-  <div class="modal" id="admin-panel">
-    <button class="modal-close" data-close="admin-modal">✕</button>
-    <h2>🔐 Admin</h2>
-
-    <div id="admin-lock">
-      <div class="admin-form">
-        <div>
-          <label>Passwort</label>
-          <input type="password" id="admin-pw" placeholder="Passwort eingeben" />
-        </div>
-        <button class="btn btn-primary" id="admin-login-btn">Einloggen</button>
-        <p id="admin-pw-err" style="color:var(--red);font-size:.85rem;text-align:center;min-height:1.2em"></p>
-      </div>
-    </div>
-
-    <div id="admin-content" style="display:none">
-
-      <div id="score-form">
-        <div class="admin-form">
-          <div>
-            <label>Challenge auswählen</label>
-            <select id="ch-select"></select>
-          </div>
-          <div>
-            <label>Punkte (0–5)</label>
-            <input type="number" id="ch-score" min="0" max="5" placeholder="0–5" />
-          </div>
-          <button class="btn btn-outline" id="set-score-btn">Punkte speichern</button>
-        </div>
-      </div>
-
-      <p id="admin-msg"></p>
-
-      <button class="btn btn-warn" id="finish-btn">🏁 Challenges beenden</button>
-    </div>
-  </div>
-</div>
-
 <!-- Final Result Overlay -->
 <div id="result-overlay">
   <div id="result-emoji">🎉</div>
@@ -360,9 +276,6 @@
 
 <script>
   // ── Configuration ────────────────────────────────────────────────────────────
-  // NOTE: Client-side password is intentionally kept simple per requirements.
-  // This app does not need to be secure.
-  const ADMIN_PASSWORD = 'jga2025';   // ← change this
   const DATA_URL = 'data/scores.json';
   const REFRESH_INTERVAL = 30_000; // ms
 
@@ -534,68 +447,6 @@
   document.querySelectorAll('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
-
-  // ── Admin trigger (7 taps on hidden bottom strip) ────────────────────────────
-  let tapCount = 0, tapTimer;
-  document.getElementById('admin-trigger').addEventListener('click', () => {
-    tapCount++;
-    clearTimeout(tapTimer);
-    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
-    if (tapCount >= 7) {
-      tapCount = 0;
-      document.getElementById('admin-modal').classList.add('open');
-    }
-  });
-
-  // ── Admin login ───────────────────────────────────────────────────────────────
-  document.getElementById('admin-login-btn').addEventListener('click', () => {
-    const pw = document.getElementById('admin-pw').value;
-    if (pw === ADMIN_PASSWORD) {
-      document.getElementById('admin-lock').style.display = 'none';
-      document.getElementById('admin-content').style.display = 'block';
-      refreshAdminSelect();
-    } else {
-      document.getElementById('admin-pw-err').textContent = 'Falsches Passwort';
-    }
-  });
-  document.getElementById('admin-pw').addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('admin-login-btn').click();
-  });
-
-  // ── Set score ─────────────────────────────────────────────────────────────────
-  document.getElementById('set-score-btn').addEventListener('click', () => {
-    const idx = parseInt(document.getElementById('ch-select').value, 10);
-    const score = parseInt(document.getElementById('ch-score').value, 10);
-    if (isNaN(score) || score < 0 || score > 5) { showAdminMsg('Punkte müssen 0–5 sein', true); return; }
-    if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
-    state.challenges[idx].score = score;
-    render();
-    showAdminMsg('Punkte gespeichert ✓');
-  });
-
-  // ── Finish ────────────────────────────────────────────────────────────────────
-  document.getElementById('finish-btn').addEventListener('click', () => {
-    if (!confirm('Challenges wirklich beenden?')) return;
-    state.finished = true;
-    document.getElementById('admin-modal').classList.remove('open');
-    showResult();
-  });
-
-  function refreshAdminSelect() {
-    const sel = document.getElementById('ch-select');
-    sel.innerHTML = state.challenges.length === 0
-      ? '<option value="">— keine Challenges —</option>'
-      : state.challenges.map((c, i) =>
-          `<option value="${i}">${esc(c.name)} (${c.type})${c.score !== null && c.score !== undefined ? ' – ' + c.score + 'P' : ''}</option>`
-        ).join('');
-  }
-
-  function showAdminMsg(msg, isErr = false) {
-    const el = document.getElementById('admin-msg');
-    el.style.color = isErr ? 'var(--red)' : 'var(--green)';
-    el.textContent = msg;
-    setTimeout(() => { el.textContent = ''; }, 3000);
-  }
 
   // ── Boot ──────────────────────────────────────────────────────────────────────
   render();
