@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       action:
-        description: 'Action: add_challenge | update_score | finish | reset'
+        description: 'Action: add_challenge | remove_challenge | finish | reset'
         required: true
         type: choice
         options:
           - add_challenge
-          - update_score
+          - remove_challenge
           - finish
           - reset
       challenge_name:
-        description: 'Challenge name (for add_challenge / update_score)'
+        description: 'Challenge name (for add_challenge / remove_challenge)'
         required: false
         type: string
       challenge_type:
@@ -24,11 +24,7 @@ on:
           - standard
           - zusatz
       score:
-        description: 'Score 0-5 (for update_score)'
-        required: false
-        type: string
-      challenge_index:
-        description: 'Challenge index (0-based) for update_score'
+        description: 'Score 0-5 (for add_challenge)'
         required: false
         type: string
 
@@ -47,7 +43,6 @@ jobs:
           CHALLENGE_NAME: ${{ github.event.inputs.challenge_name }}
           CHALLENGE_TYPE: ${{ github.event.inputs.challenge_type }}
           SCORE: ${{ github.event.inputs.score }}
-          CHALLENGE_INDEX: ${{ github.event.inputs.challenge_index }}
         run: |
           python3 - <<'EOF'
           import json, os, sys
@@ -60,34 +55,37 @@ jobs:
           if action == 'add_challenge':
               name = os.environ.get('CHALLENGE_NAME', '').strip()
               ctype = os.environ.get('CHALLENGE_TYPE', 'standard').strip()
+              score = os.environ.get('SCORE', '').strip()
               if not name:
                   print('ERROR: challenge_name is required')
+                  sys.exit(1)
+              if not score:
+                  print('ERROR: score is required')
+                  sys.exit(1)
+              score = int(score)
+              if score < 0 or score > 5:
+                  print('ERROR: score must be 0-5')
                   sys.exit(1)
               if ctype not in ('standard', 'zusatz'):
                   ctype = 'standard'
               data['challenges'].append({
                   'name': name,
                   'type': ctype,
-                  'score': None
+                  'score': score
               })
-              print(f'Added challenge: {name} ({ctype})')
+              print(f'Added challenge: {name} ({ctype}) with score {score}')
 
-          elif action == 'update_score':
-              idx = os.environ.get('CHALLENGE_INDEX', '').strip()
-              score = os.environ.get('SCORE', '').strip()
-              if not idx or not score:
-                  print('ERROR: challenge_index and score are required')
+          elif action == 'remove_challenge':
+              name = os.environ.get('CHALLENGE_NAME', '').strip()
+              if not name:
+                  print('ERROR: challenge_name is required')
                   sys.exit(1)
-              idx = int(idx)
-              score = int(score)
-              if score < 0 or score > 5:
-                  print('ERROR: score must be 0-5')
+              before = len(data['challenges'])
+              data['challenges'] = [c for c in data['challenges'] if c['name'] != name]
+              if len(data['challenges']) == before:
+                  print(f'ERROR: challenge "{name}" not found')
                   sys.exit(1)
-              if idx < 0 or idx >= len(data['challenges']):
-                  print('ERROR: challenge_index out of range')
-                  sys.exit(1)
-              data['challenges'][idx]['score'] = score
-              print(f'Updated challenge {idx} score to {score}')
+              print(f'Removed challenge: {name}')
 
           elif action == 'finish':
               data['finished'] = True
