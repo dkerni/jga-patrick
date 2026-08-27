@@ -113,14 +113,14 @@
       border-left: 4px solid transparent;
     }
     .challenge-card.standard { border-left-color: var(--blue); }
-    .challenge-card.zusatz   { border-left-color: var(--gold); }
+    .challenge-card.zusatz   { border-left-color: var(--green); }
     .challenge-card.pending  { opacity: .5; }
 
     .challenge-info { flex: 1; min-width: 0; }
     .challenge-name { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .challenge-type { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
     .challenge-card.standard .challenge-type { color: var(--blue); }
-    .challenge-card.zusatz   .challenge-type { color: var(--gold); }
+    .challenge-card.zusatz   .challenge-type { color: var(--green); }
 
     .score-badge {
       font-size: 1.4rem;
@@ -289,11 +289,11 @@
   <div class="modal">
     <button class="modal-close" data-close="info-modal">✕</button>
     <h2>📋 Spielregeln</h2>
-    <p style="margin-bottom:12px">Patrick muss verschiedene <strong>Standard-Challenges</strong> bestehen. Bei jeder Challenge können <strong>0–5 Punkte</strong> erreicht werden.</p>
+    <p style="margin-bottom:12px">Patrick muss verschiedene <strong>Standard-Challenges</strong> bestehen. Bei jeder Standard-Challenge können <strong>0–5 Punkte</strong> erreicht werden. <strong>Zusatz-Challenges</strong> können bis zu <strong>3 Punkte</strong> bringen und fliessen direkt in die Gesamtwertung ein – werden aber beim Teilen nicht mitgezählt.</p>
     <ul>
       <li>
         <span class="rule-chip chip-green">✅ Bestanden</span><br>
-        Durchschnitt <strong>&gt; 4 Punkte</strong> bei Standard-Challenges
+        Durchschnitt <strong>&gt; 4 Punkte</strong> (Gesamt-Punkte ÷ Anzahl Standard-Challenges)
       </li>
       <li>
         <span class="rule-chip chip-orange">⚡ Extra-Challenge</span><br>
@@ -304,7 +304,7 @@
         Durchschnitt <strong>unter 3 Punkten</strong>
       </li>
     </ul>
-    <p style="margin-top:14px; color:var(--gold)">⭐ Zusatz-Challenges zählen als Extra-Punkte und beeinflussen den Durchschnitt nicht.</p>
+    <p style="margin-top:14px; color:var(--green)">⭐ Zusatz-Challenges zählen zum regulären Konto (Standard- + Zusatz-Punkte ÷ Anzahl Standard-Challenges), werden aber beim Teilen nicht berücksichtigt.</p>
   </div>
 </div>
 
@@ -414,7 +414,8 @@
       return;
     }
 
-    const avg = scored.reduce((s, c) => s + c.score, 0) / scored.length;
+    const standardSum = scored.reduce((s, c) => s + c.score, 0);
+    const avg = std.length > 0 ? (standardSum + zusatzSum) / std.length : 0;
     const pct = Math.min(100, (avg / 5) * 100);
 
     wrap.style.display = 'block';
@@ -436,8 +437,8 @@
     card.classList.add(chipClass);
     statusText.textContent = label;
     avgDisplay.textContent =
-      `Ø ${avg.toFixed(2)} Punkte (${scored.length}/${std.length} Standard)` +
-      (zusatzSum > 0 ? ` · +${zusatzSum} Bonuspunkte` : '');
+      `Ø ${avg.toFixed(2)} Punkte (${scored.length}/${std.length} Standard` +
+      (zusatzSum > 0 ? `, +${zusatzSum} Zusatz` : '') + ')';
     sub.textContent = `Ø ${avg.toFixed(2)} / 5`;
   }
 
@@ -453,17 +454,22 @@
       list.innerHTML = items.map((c, i) => {
         const s = c.score;
         const pending = s === null || s === undefined;
-        const dots = Array.from({length: 5}, (_, di) =>
-          `<span class="dot ${!pending && di < s ? 'filled' : ''}"></span>`
+        const isZusatz = type === 'zusatz';
+        const maxDots = isZusatz ? 3 : 5;
+        const dotColor = isZusatz ? 'var(--green)' : 'var(--gold)';
+        const dots = Array.from({length: maxDots}, (_, di) =>
+          `<span class="dot ${!pending && di < s ? 'filled' : ''}" style="${!pending && di < s ? 'background:' + dotColor : ''}"></span>`
         ).join('');
+        const scoreDisplay = pending ? '—' : (isZusatz ? String(s) : s + '/5');
+        const color = isZusatz ? 'var(--green)' : scoreColor(s);
         return `<div class="challenge-card ${type} ${pending ? 'pending' : ''}">
           <div class="challenge-info">
             <div class="challenge-name">${esc(c.name)}</div>
-            <div class="challenge-type">${type === 'zusatz' ? '⭐ Zusatz' : '🎯 Standard'}</div>
+            <div class="challenge-type">${isZusatz ? '⭐ Zusatz' : '🎯 Standard'}</div>
           </div>
           <div>
-            <div class="score-badge" style="color:${scoreColor(s)}">
-              ${pending ? '—' : s + '/5'}
+            <div class="score-badge" style="color:${color}">
+              ${scoreDisplay}
             </div>
             <div class="score-dots">${dots}</div>
           </div>
@@ -491,7 +497,8 @@
     const zusatz = state.challenges.filter(c => c.type === 'zusatz');
     const zusatzScored = zusatz.filter(c => c.score !== null && c.score !== undefined);
     const zusatzSum = zusatzScored.reduce((s, c) => s + c.score, 0);
-    const avg = scored.length > 0 ? scored.reduce((s, c) => s + c.score, 0) / scored.length : 0;
+    const standardSum = scored.length > 0 ? scored.reduce((s, c) => s + c.score, 0) : 0;
+    const avg = std.length > 0 ? (standardSum + zusatzSum) / std.length : 0;
 
     const overlay = document.getElementById('result-overlay');
     overlay.classList.add('open');
@@ -514,8 +521,10 @@
     const rows = [
       ['Standard Challenges', std.length],
       ['Bewertet', scored.length],
-      ['Durchschnitt', avg.toFixed(2) + ' / 5'],
+      ['Standard-Punkte', standardSum],
       ['Zusatz-Punkte', '+' + zusatzSum],
+      ['Gesamt-Punkte', standardSum + zusatzSum],
+      ['Durchschnitt (/ Challenges)', avg.toFixed(2) + ' / 5'],
       ['Ergebnis', title],
     ];
     document.getElementById('result-table').innerHTML =
@@ -566,9 +575,11 @@
   document.getElementById('set-score-btn').addEventListener('click', () => {
     const idx = parseInt(document.getElementById('ch-select').value, 10);
     const score = parseInt(document.getElementById('ch-score').value, 10);
-    if (isNaN(score) || score < 0 || score > 5) { showAdminMsg('Punkte müssen 0–5 sein', true); return; }
     if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
-    state.challenges[idx].score = score;
+    const ch = state.challenges[idx];
+    const maxScore = ch.type === 'zusatz' ? 3 : 5;
+    if (isNaN(score) || score < 0 || score > maxScore) { showAdminMsg(`Punkte müssen 0–${maxScore} sein`, true); return; }
+    ch.score = score;
     render();
     showAdminMsg('Punkte gespeichert ✓');
   });
