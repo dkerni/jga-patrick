@@ -5,6 +5,11 @@
       "name": "Mount Everest",
       "type": "standard",
       "score": 4
+    },
+    {
+      "name": "Super High",
+      "type": "standard",
+      "score": 2
     }
   ]
 }
