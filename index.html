@@ -455,7 +455,7 @@
         const s = c.score;
         const pending = s === null || s === undefined;
         const isZusatz = type === 'zusatz';
-        const maxDots = isZusatz ? 3 : 5;
+        const maxDots = isZusatz ? 0 : 5;
         const dotColor = isZusatz ? 'var(--green)' : 'var(--gold)';
         const dots = Array.from({length: maxDots}, (_, di) =>
           `<span class="dot ${!pending && di < s ? 'filled' : ''}" style="${!pending && di < s ? 'background:' + dotColor : ''}"></span>`
@@ -572,6 +572,16 @@
   });
 
   // ── Set score ─────────────────────────────────────────────────────────────────
+  document.getElementById('ch-select').addEventListener('change', () => {
+    const idx = parseInt(document.getElementById('ch-select').value, 10);
+    const scoreInput = document.getElementById('ch-score');
+    if (!isNaN(idx) && state.challenges[idx] && state.challenges[idx].type === 'zusatz') {
+      scoreInput.removeAttribute('max');
+    } else {
+      scoreInput.max = '5';
+    }
+  });
+
   document.getElementById('set-score-btn').addEventListener('click', () => {
     const idx = parseInt(document.getElementById('ch-select').value, 10);
     const score = parseInt(document.getElementById('ch-score').value, 10);
@@ -598,6 +608,7 @@
       : state.challenges.map((c, i) =>
           `<option value="${i}">${esc(c.name)} (${c.type})${c.score !== null && c.score !== undefined ? ' – ' + c.score + 'P' : ''}</option>`
         ).join('');
+    sel.dispatchEvent(new Event('change'));
   }
 
   function showAdminMsg(msg, isErr = false) {
