@@ -15,6 +15,11 @@
       "name": "Bier getrunken",
       "type": "zusatz",
       "score": 1
+    },
+    {
+      "name": "Schweinehals verspiesen",
+      "type": "standard",
+      "score": 3
     }
   ]
 }
