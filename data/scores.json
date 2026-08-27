@@ -10,6 +10,11 @@
       "name": "Super High",
       "type": "standard",
       "score": 2
+    },
+    {
+      "name": "Bier getrunken",
+      "type": "zusatz",
+      "score": 1
     }
   ]
 }
