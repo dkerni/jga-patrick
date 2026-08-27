@@ -158,7 +158,7 @@
       border: none;
       z-index: 200;
     }
-    /* tap 5× in bottom-left corner to reveal admin panel */
+    /* tap 7× on hidden bottom strip to reveal admin panel */
 
     /* ── Modal (info + admin) ── */
     .modal-overlay {
@@ -281,7 +281,7 @@
   <div id="zusatz-list"><p class="no-challenges">Keine Zusatz-Challenges eingetragen</p></div>
 </div>
 
-<!-- Hidden admin trigger: tap 7× bottom strip -->
+<!-- Hidden admin trigger: tap 7× on bottom strip -->
 <button id="admin-trigger" aria-hidden="true" tabindex="-1"></button>
 
 <!-- Info Modal -->
@@ -377,6 +377,8 @@
 
 <script>
   // ── Configuration ────────────────────────────────────────────────────────────
+  // NOTE: Client-side password is intentionally kept simple per requirements.
+  // This app does not need to be secure.
   const ADMIN_PASSWORD = 'jga2025';   // ← change this
   const DATA_URL = 'data/scores.json';
   const REFRESH_INTERVAL = 30_000; // ms
@@ -510,7 +512,6 @@
 
     const overlay = document.getElementById('result-overlay');
     overlay.classList.add('open');
-    overlay.style.display = 'flex';
 
     let emoji, title, sub, color;
     if (avg > 4) {

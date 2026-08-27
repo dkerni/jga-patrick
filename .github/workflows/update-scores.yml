@@ -3,6 +3,9 @@ name: Update Scores
 on:
   workflow_dispatch:
     inputs:
+
+permissions:
+  contents: write
       action:
         description: 'Action: add_challenge | update_score | finish | reset'
         required: true
