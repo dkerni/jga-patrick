@@ -1,0 +1,107 @@
+name: Update Scores
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action: add_challenge | update_score | finish | reset'
+        required: true
+        type: choice
+        options:
+          - add_challenge
+          - update_score
+          - finish
+          - reset
+      challenge_name:
+        description: 'Challenge name (for add_challenge / update_score)'
+        required: false
+        type: string
+      challenge_type:
+        description: 'Challenge type: standard | zusatz (for add_challenge)'
+        required: false
+        type: choice
+        options:
+          - standard
+          - zusatz
+      score:
+        description: 'Score 0-5 (for update_score)'
+        required: false
+        type: string
+      challenge_index:
+        description: 'Challenge index (0-based) for update_score'
+        required: false
+        type: string
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update scores.json
+        env:
+          ACTION: ${{ github.event.inputs.action }}
+          CHALLENGE_NAME: ${{ github.event.inputs.challenge_name }}
+          CHALLENGE_TYPE: ${{ github.event.inputs.challenge_type }}
+          SCORE: ${{ github.event.inputs.score }}
+          CHALLENGE_INDEX: ${{ github.event.inputs.challenge_index }}
+        run: |
+          python3 - <<'EOF'
+          import json, os, sys
+
+          with open('data/scores.json', 'r') as f:
+              data = json.load(f)
+
+          action = os.environ['ACTION']
+
+          if action == 'add_challenge':
+              name = os.environ.get('CHALLENGE_NAME', '').strip()
+              ctype = os.environ.get('CHALLENGE_TYPE', 'standard').strip()
+              if not name:
+                  print('ERROR: challenge_name is required')
+                  sys.exit(1)
+              if ctype not in ('standard', 'zusatz'):
+                  ctype = 'standard'
+              data['challenges'].append({
+                  'name': name,
+                  'type': ctype,
+                  'score': None
+              })
+              print(f'Added challenge: {name} ({ctype})')
+
+          elif action == 'update_score':
+              idx = os.environ.get('CHALLENGE_INDEX', '').strip()
+              score = os.environ.get('SCORE', '').strip()
+              if not idx or not score:
+                  print('ERROR: challenge_index and score are required')
+                  sys.exit(1)
+              idx = int(idx)
+              score = int(score)
+              if score < 0 or score > 5:
+                  print('ERROR: score must be 0-5')
+                  sys.exit(1)
+              if idx < 0 or idx >= len(data['challenges']):
+                  print('ERROR: challenge_index out of range')
+                  sys.exit(1)
+              data['challenges'][idx]['score'] = score
+              print(f'Updated challenge {idx} score to {score}')
+
+          elif action == 'finish':
+              data['finished'] = True
+              print('Marked as finished')
+
+          elif action == 'reset':
+              data = {'finished': False, 'challenges': []}
+              print('Reset data')
+
+          with open('data/scores.json', 'w') as f:
+              json.dump(data, f, indent=2, ensure_ascii=False)
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/scores.json
+          git diff --cached --quiet || git commit -m "chore: update scores [${{ github.event.inputs.action }}]"
+          git push

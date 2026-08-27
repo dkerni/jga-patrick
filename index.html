@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JGA Patrick 🎉 Scoreboard</title>
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --accent: #e94560;
+      --gold: #f5c518;
+      --green: #4caf50;
+      --orange: #ff9800;
+      --red: #f44336;
+      --blue: #2196f3;
+      --text: #f0f0f0;
+      --muted: #888;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100dvh;
+      padding: 0 0 80px;
+    }
+
+    /* ── Header ── */
+    header {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      padding: 20px 16px 16px;
+      text-align: center;
+      border-bottom: 2px solid var(--accent);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--gold);
+      letter-spacing: 1px;
+    }
+    header p { font-size: .85rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── Status card ── */
+    #status-card {
+      margin: 16px;
+      padding: 18px;
+      background: var(--card);
+      border-radius: var(--radius);
+      border: 2px solid transparent;
+      transition: border-color .3s;
+    }
+    #status-card.winning  { border-color: var(--green); }
+    #status-card.extra    { border-color: var(--orange); }
+    #status-card.losing   { border-color: var(--red); }
+    #status-card.finished { border-color: var(--gold); }
+
+    #status-emoji { font-size: 2.5rem; text-align: center; }
+    #status-text  { text-align: center; font-size: 1.1rem; font-weight: 600; margin-top: 6px; }
+    #avg-display  { text-align: center; font-size: .9rem; color: var(--muted); margin-top: 4px; }
+
+    .progress-bar-wrap {
+      margin-top: 12px;
+      background: #2a2a3e;
+      border-radius: 999px;
+      height: 10px;
+      overflow: hidden;
+    }
+    #progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      transition: width .5s, background .5s;
+      background: var(--green);
+    }
+
+    /* ── Info button ── */
+    #info-btn {
+      display: block;
+      margin: 0 16px 4px;
+      width: calc(100% - 32px);
+      padding: 10px;
+      border: 1px solid var(--muted);
+      border-radius: var(--radius);
+      background: transparent;
+      color: var(--muted);
+      font-size: .85rem;
+      cursor: pointer;
+    }
+    #info-btn:active { opacity: .7; }
+
+    /* ── Challenges list ── */
+    #challenges-section { padding: 0 16px; }
+    #challenges-section h2 {
+      font-size: 1rem;
+      color: var(--muted);
+      margin: 16px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .challenge-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-left: 4px solid transparent;
+    }
+    .challenge-card.standard { border-left-color: var(--blue); }
+    .challenge-card.zusatz   { border-left-color: var(--gold); }
+    .challenge-card.pending  { opacity: .5; }
+
+    .challenge-info { flex: 1; min-width: 0; }
+    .challenge-name { font-size: 1rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .challenge-type { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+    .challenge-card.standard .challenge-type { color: var(--blue); }
+    .challenge-card.zusatz   .challenge-type { color: var(--gold); }
+
+    .score-badge {
+      font-size: 1.4rem;
+      font-weight: 700;
+      min-width: 42px;
+      text-align: center;
+    }
+    .score-dots {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      justify-content: center;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #333;
+    }
+    .dot.filled { background: var(--gold); }
+
+    .no-challenges {
+      text-align: center;
+      color: var(--muted);
+      font-size: .9rem;
+      padding: 40px 0;
+    }
+
+    /* ── Admin trigger (hidden) ── */
+    #admin-trigger {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 50px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      z-index: 200;
+    }
+    /* tap 5× in bottom-left corner to reveal admin panel */
+
+    /* ── Modal (info + admin) ── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 500;
+      align-items: flex-end;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--card);
+      width: 100%;
+      max-height: 90dvh;
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 24px 20px 40px;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1.2rem; margin-bottom: 14px; color: var(--gold); }
+    .modal p, .modal li { font-size: .9rem; line-height: 1.6; color: #ccc; }
+    .modal ul { padding-left: 18px; }
+    .modal ul li { margin-bottom: 6px; }
+    .modal-close {
+      float: right;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 1.4rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .rule-chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: .78rem;
+      font-weight: 600;
+      margin: 2px 0;
+    }
+    .chip-green  { background: var(--green);  color: #fff; }
+    .chip-orange { background: var(--orange); color: #fff; }
+    .chip-red    { background: var(--red);    color: #fff; }
+
+    /* ── Admin panel ── */
+    #admin-panel .admin-form { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    #admin-panel label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 3px; }
+    #admin-panel input, #admin-panel select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #0f0f1a;
+      color: var(--text);
+      font-size: .95rem;
+    }
+    .btn {
+      padding: 12px;
+      border-radius: var(--radius);
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-outline { background: transparent; border: 2px solid var(--accent); color: var(--accent); }
+    .btn-danger  { background: var(--red); color: #fff; }
+    .btn-warn    { background: var(--orange); color: #fff; margin-top: 20px; }
+    .btn:active  { opacity: .8; }
+
+    #admin-msg { font-size: .85rem; color: var(--green); text-align: center; min-height: 1.2em; margin-top: 4px; }
+
+    /* ── Final result overlay ── */
+    #result-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 999;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      text-align: center;
+    }
+    #result-overlay.open { display: flex; }
+    #result-emoji { font-size: 5rem; }
+    #result-title { font-size: 2rem; font-weight: 800; margin-top: 16px; }
+    #result-sub   { font-size: 1rem; color: var(--muted); margin-top: 8px; }
+    #result-stats { margin-top: 24px; background: var(--card); border-radius: var(--radius); padding: 16px 20px; width: 100%; }
+    #result-stats table { width: 100%; border-collapse: collapse; }
+    #result-stats td { padding: 6px 0; font-size: .9rem; }
+    #result-stats td:last-child { text-align: right; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🎉 JGA Patrick</h1>
+  <p id="header-sub">Scoreboard</p>
+</header>
+
+<div id="status-card">
+  <div id="status-emoji">⏳</div>
+  <div id="status-text">Noch keine Challenges</div>
+  <div id="avg-display"></div>
+  <div class="progress-bar-wrap" id="progress-wrap" style="display:none">
+    <div id="progress-bar" style="width:0%"></div>
+  </div>
+</div>
+
+<button id="info-btn">ℹ️ Spielregeln anzeigen</button>
+
+<div id="challenges-section">
+  <h2>Standard Challenges</h2>
+  <div id="standard-list"><p class="no-challenges">Keine Challenges eingetragen</p></div>
+  <h2>Zusatz Challenges</h2>
+  <div id="zusatz-list"><p class="no-challenges">Keine Zusatz-Challenges eingetragen</p></div>
+</div>
+
+<!-- Hidden admin trigger: tap 7× bottom strip -->
+<button id="admin-trigger" aria-hidden="true" tabindex="-1"></button>
+
+<!-- Info Modal -->
+<div class="modal-overlay" id="info-modal">
+  <div class="modal">
+    <button class="modal-close" data-close="info-modal">✕</button>
+    <h2>📋 Spielregeln</h2>
+    <p style="margin-bottom:12px">Patrick muss verschiedene <strong>Standard-Challenges</strong> bestehen. Bei jeder Challenge können <strong>0–5 Punkte</strong> erreicht werden.</p>
+    <ul>
+      <li>
+        <span class="rule-chip chip-green">✅ Bestanden</span><br>
+        Durchschnitt <strong>&gt; 4 Punkte</strong> bei Standard-Challenges
+      </li>
+      <li>
+        <span class="rule-chip chip-orange">⚡ Extra-Challenge</span><br>
+        Durchschnitt zwischen <strong>3 und 4 Punkten</strong> → Es gibt eine Zusatz-Challenge am Schluss
+      </li>
+      <li>
+        <span class="rule-chip chip-red">❌ Verloren</span><br>
+        Durchschnitt <strong>unter 3 Punkten</strong>
+      </li>
+    </ul>
+    <p style="margin-top:14px; color:var(--gold)">⭐ Zusatz-Challenges zählen als Extra-Punkte und beeinflussen den Durchschnitt nicht.</p>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal" id="admin-panel">
+    <button class="modal-close" data-close="admin-modal">✕</button>
+    <h2>🔐 Admin</h2>
+
+    <div id="admin-lock">
+      <div class="admin-form">
+        <div>
+          <label>Passwort</label>
+          <input type="password" id="admin-pw" placeholder="Passwort eingeben" />
+        </div>
+        <button class="btn btn-primary" id="admin-login-btn">Einloggen</button>
+        <p id="admin-pw-err" style="color:var(--red);font-size:.85rem;text-align:center;min-height:1.2em"></p>
+      </div>
+    </div>
+
+    <div id="admin-content" style="display:none">
+
+      <div class="admin-form" id="add-form">
+        <div>
+          <label>Challenge Name</label>
+          <input type="text" id="ch-name" placeholder="z.B. Bierpong" />
+        </div>
+        <div>
+          <label>Typ</label>
+          <select id="ch-type">
+            <option value="standard">Standard</option>
+            <option value="zusatz">Zusatz</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" id="add-ch-btn">+ Challenge hinzufügen</button>
+      </div>
+
+      <hr style="border-color:#333;margin:20px 0">
+
+      <div id="score-form">
+        <div class="admin-form">
+          <div>
+            <label>Challenge auswählen</label>
+            <select id="ch-select"></select>
+          </div>
+          <div>
+            <label>Punkte (0–5)</label>
+            <input type="number" id="ch-score" min="0" max="5" placeholder="0–5" />
+          </div>
+          <button class="btn btn-outline" id="set-score-btn">Punkte speichern</button>
+        </div>
+      </div>
+
+      <p id="admin-msg"></p>
+
+      <button class="btn btn-warn" id="finish-btn">🏁 Challenges beenden</button>
+    </div>
+  </div>
+</div>
+
+<!-- Final Result Overlay -->
+<div id="result-overlay">
+  <div id="result-emoji">🎉</div>
+  <div id="result-title">Ergebnis</div>
+  <div id="result-sub"></div>
+  <div id="result-stats">
+    <table id="result-table"></table>
+  </div>
+</div>
+
+<script>
+  // ── Configuration ────────────────────────────────────────────────────────────
+  const ADMIN_PASSWORD = 'jga2025';   // ← change this
+  const DATA_URL = 'data/scores.json';
+  const REFRESH_INTERVAL = 30_000; // ms
+
+  // ── State ────────────────────────────────────────────────────────────────────
+  let state = { finished: false, challenges: [] };
+
+  // ── Fetch & render loop ──────────────────────────────────────────────────────
+  async function loadData() {
+    try {
+      const r = await fetch(DATA_URL + '?v=' + Date.now());
+      if (!r.ok) throw new Error(r.status);
+      state = await r.json();
+      render();
+    } catch (e) {
+      console.warn('Could not load scores.json', e);
+    }
+  }
+
+  function render() {
+    renderStatus();
+    renderChallenges();
+    if (state.finished) showResult();
+  }
+
+  // ── Status card ──────────────────────────────────────────────────────────────
+  function renderStatus() {
+    const std = state.challenges.filter(c => c.type === 'standard');
+    const scored = std.filter(c => c.score !== null && c.score !== undefined);
+    const zusatz = state.challenges.filter(c => c.type === 'zusatz');
+    const zusatzScored = zusatz.filter(c => c.score !== null && c.score !== undefined);
+    const zusatzSum = zusatzScored.reduce((s, c) => s + c.score, 0);
+
+    const card = document.getElementById('status-card');
+    const emoji = document.getElementById('status-emoji');
+    const statusText = document.getElementById('status-text');
+    const avgDisplay = document.getElementById('avg-display');
+    const wrap = document.getElementById('progress-wrap');
+    const bar = document.getElementById('progress-bar');
+    const sub = document.getElementById('header-sub');
+
+    card.className = '';
+
+    if (scored.length === 0) {
+      emoji.textContent = '⏳';
+      statusText.textContent = 'Noch keine Challenges bewertet';
+      avgDisplay.textContent = '';
+      wrap.style.display = 'none';
+      sub.textContent = 'Scoreboard';
+      return;
+    }
+
+    const avg = scored.reduce((s, c) => s + c.score, 0) / scored.length;
+    const pct = Math.min(100, (avg / 5) * 100);
+
+    wrap.style.display = 'block';
+    bar.style.width = pct + '%';
+
+    let label, chipClass, barColor;
+    if (avg > 4) {
+      label = '✅ Auf Kurs – Bestanden!'; chipClass = 'winning'; barColor = 'var(--green)';
+      emoji.textContent = '🏆';
+    } else if (avg >= 3) {
+      label = '⚡ Grenzwertig – Extra-Challenge droht!'; chipClass = 'extra'; barColor = 'var(--orange)';
+      emoji.textContent = '😅';
+    } else {
+      label = '❌ Verloren – Zu wenig Punkte'; chipClass = 'losing'; barColor = 'var(--red)';
+      emoji.textContent = '💀';
+    }
+
+    bar.style.background = barColor;
+    card.classList.add(chipClass);
+    statusText.textContent = label;
+    avgDisplay.textContent =
+      `Ø ${avg.toFixed(2)} Punkte (${scored.length}/${std.length} Standard)` +
+      (zusatzSum > 0 ? ` · +${zusatzSum} Bonuspunkte` : '');
+    sub.textContent = `Ø ${avg.toFixed(2)} / 5`;
+  }
+
+  // ── Challenges list ──────────────────────────────────────────────────────────
+  function renderChallenges() {
+    ['standard', 'zusatz'].forEach(type => {
+      const list = document.getElementById(type + '-list');
+      const items = state.challenges.filter(c => c.type === type);
+      if (items.length === 0) {
+        list.innerHTML = '<p class="no-challenges">Keine Einträge</p>';
+        return;
+      }
+      list.innerHTML = items.map((c, i) => {
+        const s = c.score;
+        const pending = s === null || s === undefined;
+        const dots = Array.from({length: 5}, (_, di) =>
+          `<span class="dot ${!pending && di < s ? 'filled' : ''}"></span>`
+        ).join('');
+        return `<div class="challenge-card ${type} ${pending ? 'pending' : ''}">
+          <div class="challenge-info">
+            <div class="challenge-name">${esc(c.name)}</div>
+            <div class="challenge-type">${type === 'zusatz' ? '⭐ Zusatz' : '🎯 Standard'}</div>
+          </div>
+          <div>
+            <div class="score-badge" style="color:${scoreColor(s)}">
+              ${pending ? '—' : s + '/5'}
+            </div>
+            <div class="score-dots">${dots}</div>
+          </div>
+        </div>`;
+      }).join('');
+    });
+  }
+
+  function scoreColor(s) {
+    if (s === null || s === undefined) return 'var(--muted)';
+    if (s >= 5) return 'var(--green)';
+    if (s >= 4) return '#8bc34a';
+    if (s >= 3) return 'var(--orange)';
+    return 'var(--red)';
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ── Final result ─────────────────────────────────────────────────────────────
+  function showResult() {
+    const std = state.challenges.filter(c => c.type === 'standard');
+    const scored = std.filter(c => c.score !== null && c.score !== undefined);
+    const zusatz = state.challenges.filter(c => c.type === 'zusatz');
+    const zusatzScored = zusatz.filter(c => c.score !== null && c.score !== undefined);
+    const zusatzSum = zusatzScored.reduce((s, c) => s + c.score, 0);
+    const avg = scored.length > 0 ? scored.reduce((s, c) => s + c.score, 0) / scored.length : 0;
+
+    const overlay = document.getElementById('result-overlay');
+    overlay.classList.add('open');
+    overlay.style.display = 'flex';
+
+    let emoji, title, sub, color;
+    if (avg > 4) {
+      emoji = '🏆'; title = 'Patrick hat bestanden!'; sub = 'Großartige Leistung!'; color = 'var(--green)';
+    } else if (avg >= 3) {
+      emoji = '⚡'; title = 'Extra-Challenge!'; sub = 'Knapp – es gibt eine Bonusrunde!'; color = 'var(--orange)';
+    } else {
+      emoji = '💀'; title = 'Leider verloren…'; sub = 'Nächstes Mal schafft er es bestimmt!'; color = 'var(--red)';
+    }
+
+    document.getElementById('result-emoji').textContent = emoji;
+    const titleEl = document.getElementById('result-title');
+    titleEl.textContent = title;
+    titleEl.style.color = color;
+    document.getElementById('result-sub').textContent = sub;
+
+    const rows = [
+      ['Standard Challenges', std.length],
+      ['Bewertet', scored.length],
+      ['Durchschnitt', avg.toFixed(2) + ' / 5'],
+      ['Zusatz-Punkte', '+' + zusatzSum],
+      ['Ergebnis', title],
+    ];
+    document.getElementById('result-table').innerHTML =
+      rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  }
+
+  // ── Modals ───────────────────────────────────────────────────────────────────
+  document.getElementById('info-btn').addEventListener('click', () => {
+    document.getElementById('info-modal').classList.add('open');
+  });
+  document.querySelectorAll('[data-close]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById(btn.dataset.close).classList.remove('open');
+    });
+  });
+  document.querySelectorAll('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+  });
+
+  // ── Admin trigger (7 taps on hidden bottom strip) ────────────────────────────
+  let tapCount = 0, tapTimer;
+  document.getElementById('admin-trigger').addEventListener('click', () => {
+    tapCount++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+    if (tapCount >= 7) {
+      tapCount = 0;
+      document.getElementById('admin-modal').classList.add('open');
+    }
+  });
+
+  // ── Admin login ───────────────────────────────────────────────────────────────
+  document.getElementById('admin-login-btn').addEventListener('click', () => {
+    const pw = document.getElementById('admin-pw').value;
+    if (pw === ADMIN_PASSWORD) {
+      document.getElementById('admin-lock').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+      refreshAdminSelect();
+    } else {
+      document.getElementById('admin-pw-err').textContent = 'Falsches Passwort';
+    }
+  });
+  document.getElementById('admin-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('admin-login-btn').click();
+  });
+
+  // ── Add challenge ─────────────────────────────────────────────────────────────
+  document.getElementById('add-ch-btn').addEventListener('click', () => {
+    const name = document.getElementById('ch-name').value.trim();
+    const type = document.getElementById('ch-type').value;
+    if (!name) { showAdminMsg('Bitte Name eingeben', true); return; }
+    state.challenges.push({ name, type, score: null });
+    saveState();
+    document.getElementById('ch-name').value = '';
+    refreshAdminSelect();
+    render();
+    showAdminMsg('Challenge hinzugefügt ✓');
+  });
+
+  // ── Set score ─────────────────────────────────────────────────────────────────
+  document.getElementById('set-score-btn').addEventListener('click', () => {
+    const idx = parseInt(document.getElementById('ch-select').value, 10);
+    const score = parseInt(document.getElementById('ch-score').value, 10);
+    if (isNaN(score) || score < 0 || score > 5) { showAdminMsg('Punkte müssen 0–5 sein', true); return; }
+    if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
+    state.challenges[idx].score = score;
+    saveState();
+    render();
+    showAdminMsg('Punkte gespeichert ✓');
+  });
+
+  // ── Finish ────────────────────────────────────────────────────────────────────
+  document.getElementById('finish-btn').addEventListener('click', () => {
+    if (!confirm('Challenges wirklich beenden?')) return;
+    state.finished = true;
+    saveState();
+    document.getElementById('admin-modal').classList.remove('open');
+    showResult();
+  });
+
+  function refreshAdminSelect() {
+    const sel = document.getElementById('ch-select');
+    sel.innerHTML = state.challenges.length === 0
+      ? '<option value="">— keine Challenges —</option>'
+      : state.challenges.map((c, i) =>
+          `<option value="${i}">${esc(c.name)} (${c.type})${c.score !== null && c.score !== undefined ? ' – ' + c.score + 'P' : ''}</option>`
+        ).join('');
+  }
+
+  function showAdminMsg(msg, isErr = false) {
+    const el = document.getElementById('admin-msg');
+    el.style.color = isErr ? 'var(--red)' : 'var(--green)';
+    el.textContent = msg;
+    setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  // ── Persist to localStorage (lightweight local storage) ─────────────────────
+  // NOTE: For multi-device sync the admin uses the GitHub Actions workflow.
+  // Local admin changes are stored in localStorage and also reflected in-memory.
+  // The GitHub Pages version always fetches scores.json from the repo on load.
+  function saveState() {
+    try { localStorage.setItem('jga-state', JSON.stringify(state)); } catch {}
+  }
+
+  function loadLocalState() {
+    try {
+      const s = localStorage.getItem('jga-state');
+      if (s) state = JSON.parse(s);
+    } catch {}
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────────────────
+  loadLocalState();
+  render();
+  loadData(); // overwrite with server data
+  setInterval(loadData, REFRESH_INTERVAL);
+</script>
+</body>
+</html>
