@@ -1,4 +1,10 @@
 {
   "finished": false,
-  "challenges": []
+  "challenges": [
+    {
+      "name": "Schild Design",
+      "type": "standard",
+      "score": 3
+    }
+  ]
 }
