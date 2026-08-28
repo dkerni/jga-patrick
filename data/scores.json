@@ -10,6 +10,11 @@
       "name": "No Foodwaste",
       "type": "standard",
       "score": 4
+    },
+    {
+      "name": "Gameorama",
+      "type": "standard",
+      "score": 5
     }
   ]
 }
