@@ -24,7 +24,7 @@ on:
           - standard
           - zusatz
       score:
-        description: 'Score 0-5 (for add_challenge)'
+        description: 'Score 0-5 (standard) or any whole number incl. negative for fail (zusatz)'
         required: false
         type: string
 
@@ -62,12 +62,16 @@ jobs:
               if not score:
                   print('ERROR: score is required')
                   sys.exit(1)
-              score = int(score)
-              if score < 0 or score > 5:
-                  print('ERROR: score must be 0-5')
+              try:
+                  score = int(score)
+              except ValueError:
+                  print('ERROR: score must be a whole number')
                   sys.exit(1)
               if ctype not in ('standard', 'zusatz'):
                   ctype = 'standard'
+              if ctype == 'standard' and (score < 0 or score > 5):
+                  print('ERROR: score must be 0-5')
+                  sys.exit(1)
               data['challenges'].append({
                   'name': name,
                   'type': ctype,
