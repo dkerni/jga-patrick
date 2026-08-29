@@ -334,7 +334,7 @@
             <select id="ch-select"></select>
           </div>
           <div>
-            <label>Punkte (0–5, bei Zusatz unbegrenzt)</label>
+            <label>Punkte (0–5, bei Zusatz auch negativ möglich)</label>
             <input type="number" id="ch-score" min="0" placeholder="Punkte" />
           </div>
           <button class="btn btn-outline" id="set-score-btn">Punkte speichern</button>
@@ -577,6 +577,7 @@
     const scoreInput = document.getElementById('ch-score');
     if (!isNaN(idx) && state.challenges[idx] && state.challenges[idx].type === 'zusatz') {
       scoreInput.removeAttribute('max');
+      scoreInput.removeAttribute('min');
     } else {
       scoreInput.max = '5';
     }
@@ -587,7 +588,7 @@
     const score = parseInt(document.getElementById('ch-score').value, 10);
     if (isNaN(idx)) { showAdminMsg('Bitte Challenge wählen', true); return; }
     const ch = state.challenges[idx];
-    if (isNaN(score) || score < 0 || (ch.type !== 'zusatz' && score > 5)) { showAdminMsg(ch.type === 'zusatz' ? 'Punkte müssen ≥ 0 sein' : 'Punkte müssen 0–5 sein', true); return; }
+    if (isNaN(score) || (ch.type === 'zusatz' ? false : score < 0) || (ch.type !== 'zusatz' && score > 5)) { showAdminMsg(ch.type === 'zusatz' ? 'Bitte gültige Punkte eingeben' : 'Punkte müssen 0–5 sein', true); return; }
     ch.score = score;
     render();
     showAdminMsg('Punkte gespeichert ✓');
