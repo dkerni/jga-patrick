@@ -55,6 +55,11 @@
       "name": "Völkerball",
       "type": "zusatz",
       "score": 2
+    },
+    {
+      "name": "Links abgebogen",
+      "type": "zusatz",
+      "score": -1
     }
   ]
 }
