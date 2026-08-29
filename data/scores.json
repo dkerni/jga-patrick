@@ -30,6 +30,11 @@
       "name": "Schiessen",
       "type": "standard",
       "score": 0
+    },
+    {
+      "name": "Kubb",
+      "type": "standard",
+      "score": 2
     }
   ]
 }
