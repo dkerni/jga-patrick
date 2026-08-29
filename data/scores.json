@@ -65,6 +65,11 @@
       "name": "Paintball 2v1",
       "type": "standard",
       "score": 4
+    },
+    {
+      "name": "Quiz Trauzeuge",
+      "type": "standard",
+      "score": 3
     }
   ]
 }
