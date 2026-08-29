@@ -45,6 +45,11 @@
       "name": "Quiz Allgemeinwissen",
       "type": "standard",
       "score": 1
+    },
+    {
+      "name": "Quiz Schätzfragen",
+      "type": "standard",
+      "score": 3
     }
   ]
 }
