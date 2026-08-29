@@ -60,6 +60,11 @@
       "name": "Links abgebogen",
       "type": "zusatz",
       "score": -1
+    },
+    {
+      "name": "Paintball 2v1",
+      "type": "standard",
+      "score": 4
     }
   ]
 }
