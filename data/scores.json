@@ -40,6 +40,11 @@
       "name": "Quiz Selina 2",
       "type": "standard",
       "score": 2
+    },
+    {
+      "name": "Quiz Allgemeinwissen",
+      "type": "standard",
+      "score": 1
     }
   ]
 }
