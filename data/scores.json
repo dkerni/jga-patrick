@@ -25,6 +25,11 @@
       "name": "Kette durchgefeilt",
       "type": "standard",
       "score": 5
+    },
+    {
+      "name": "Schiessen",
+      "type": "standard",
+      "score": 0
     }
   ]
 }
