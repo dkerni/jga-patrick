@@ -75,6 +75,11 @@
       "name": "Rede Päde",
       "type": "standard",
       "score": 3
+    },
+    {
+      "name": "Drinks & Shots",
+      "type": "zusatz",
+      "score": 5
     }
   ]
 }
