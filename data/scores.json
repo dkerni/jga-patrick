@@ -50,6 +50,11 @@
       "name": "Quiz Schätzfragen",
       "type": "standard",
       "score": 3
+    },
+    {
+      "name": "Völkerball",
+      "type": "zusatz",
+      "score": 2
     }
   ]
 }
