@@ -90,6 +90,11 @@
       "name": "Zu früh Hotel",
       "type": "zusatz",
       "score": -1
+    },
+    {
+      "name": "Petition",
+      "type": "standard",
+      "score": 4
     }
   ]
 }
