@@ -85,6 +85,11 @@
       "name": "Drinks & Shots 2",
       "type": "zusatz",
       "score": 3
+    },
+    {
+      "name": "Zu früh Hotel",
+      "type": "zusatz",
+      "score": -1
     }
   ]
 }
