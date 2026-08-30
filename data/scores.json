@@ -80,11 +80,6 @@
       "name": "Drinks & Shots",
       "type": "zusatz",
       "score": 5
-    },
-    {
-      "name": "Drinks & Shots 2",
-      "type": "standard",
-      "score": 3
     }
   ]
 }
