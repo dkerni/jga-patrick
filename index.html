@@ -242,9 +242,10 @@
       z-index: 999;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 32px 24px;
+      justify-content: flex-start;
+      padding: 32px 24px 64px;
       text-align: center;
+      overflow-y: auto;
     }
     #result-overlay.open { display: flex; }
     #result-emoji { font-size: 5rem; }
@@ -254,6 +255,12 @@
     #result-stats table { width: 100%; border-collapse: collapse; }
     #result-stats td { padding: 6px 0; font-size: .9rem; }
     #result-stats td:last-child { text-align: right; font-weight: 600; }
+    #result-overlay #challenges-section {
+      width: 100%;
+      margin-top: 24px;
+      padding: 0;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -384,7 +391,7 @@
   function render() {
     renderStatus();
     renderChallenges();
-    if (state.finished) showResult();
+    if (state.finished) showResult(); else hideResult();
   }
 
   // ── Status card ──────────────────────────────────────────────────────────────
@@ -529,6 +536,19 @@
     ];
     document.getElementById('result-table').innerHTML =
       rows.map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+    // Keep the challenges list visible below the summary
+    const section = document.getElementById('challenges-section');
+    if (section.parentElement !== overlay) overlay.appendChild(section);
+  }
+
+  function hideResult() {
+    const overlay = document.getElementById('result-overlay');
+    overlay.classList.remove('open');
+    const section = document.getElementById('challenges-section');
+    if (section.parentElement === overlay) {
+      document.getElementById('admin-trigger').before(section);
+    }
   }
 
   // ── Modals ───────────────────────────────────────────────────────────────────
